@@ -3,518 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maba Survival Guide 2.0 | Teman AI Anak Kos</title>
+    <title>Maba Survival Guide | UNIB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Modern & Vibrant (Dark Mode) -->
-    <!-- Application Structure Plan: SPA dengan navigasi sidebar tetap dan konten utama. Struktur diperbarui dengan fitur utama: 1. Direktori Kampus yang dapat diedit dan disimpan di localStorage. 2. Modal Resep Detail untuk setiap masakan. 3. Asisten AI "Gemi" yang didukung Gemini API untuk menjawab pertanyaan mahasiswa secara interaktif. Desain dirombak total menjadi dark mode yang modern dan menarik bagi Gen Z. -->
-    <!-- Visualization & Content Choices: Checklist dengan progress bar untuk gamifikasi. Resep disajikan dalam grid dengan modal interaktif. Direktori menggunakan contentEditable untuk input langsung. Fitur AI menggunakan antarmuka chat yang lucu untuk meningkatkan engagement. Chart.js tetap digunakan untuk visualisasi data resep. -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Vibrant Earth Tones -->
+    <!-- Application Structure Plan: Versi final ini menyempurnakan arsitektur SPA dengan mengintegrasikan konten yang jauh lebih kaya. Struktur navigasi tetap, namun setiap halaman konten sekarang menggunakan komponen UI yang lebih canggih seperti modal untuk resep detail, akordeon untuk checklist, dan kartu info yang dirancang khusus (callout boxes). Penambahan utama adalah Floating Action Button (FAB) untuk memanggil "RafflesBot", sebuah chatbot berbasis aturan. Struktur ini dipilih untuk meningkatkan engagement dan menyediakan bantuan instan tanpa meninggalkan halaman utama, menjadikannya sebuah 'dashboard' kehidupan maba yang sesungguhnya. -->
+    <!-- Visualization & Content Choices:
+        - Detailed Checklist: Report Info -> Kebutuhan kos. Goal -> Mengorganisir. Viz/Method -> Akordeon yang dapat diciutkan per kategori. Interaction -> Centang item, status tersimpan. Justification -> Mengelola daftar panjang secara efisien. Library/Method -> HTML/JS/LocalStorage.
+        - Recipe Modal: Report Info -> Resep lengkap. Goal -> Menginstruksikan. Viz/Method -> Kartu resep yang saat diklik memunculkan modal dengan detail lengkap (bahan & langkah). Interaction -> Klik untuk detail. Justification -> Menjaga antarmuka utama tetap bersih sambil menyediakan informasi mendalam sesuai permintaan. Library/Method -> HTML/CSS/JS.
+        - Enhanced RafflesBot: Report Info -> FAQ Maba. Goal -> Membantu & Menghibur. Viz/Method -> Modal Chat UI. Interaction -> Menu opsi yang lebih beragam, termasuk saran eksplorasi & kontak darurat. Justification -> Meningkatkan peran bot sebagai asisten virtual yang benar-benar berguna. Library/Method -> HTML/CSS/JS.
+        - Callout Boxes: Report Info -> Tips spesifik. Goal -> Menekankan info penting. Viz/Method -> Kartu dengan gaya visual yang berbeda (ikon, warna batas). Interaction -> Statis. Justification -> Meniru elemen desain yang efektif dari dokumen asli untuk menarik perhatian ke tips kunci. Library/Method -> HTML/CSS.
+    -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         :root {
-            --bg-primary: #111827;
-            --bg-secondary: #1F2937;
-            --text-primary: #F9FAFB;
-            --text-secondary: #9CA3AF;
-            --accent: #38BDF8;
-            --accent-hover: #0EA5E9;
+            --primary: #E2725B;
+            --secondary: #2C5282;
+            --background: #F7FAFC;
+            --text-dark: #2D3748;
+            --text-light: #718096;
+            --card-bg: #FFFFFF;
         }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
-        h1, h2, h3, h4 {
-            font-family: 'Space Grotesk', sans-serif;
-            color: var(--text-primary);
-        }
-        .nav-link {
-            transition: all 0.2s ease-in-out;
-            border-left: 3px solid transparent;
-        }
-        .nav-link.active {
-            background-color: rgba(56, 189, 248, 0.1);
-            color: var(--accent);
-            border-left-color: var(--accent);
-        }
-        .nav-link:not(.active):hover {
-            background-color: var(--bg-secondary);
-        }
-        .content-section { display: none; animation: fadeIn 0.5s ease; }
-        .content-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .recipe-card { transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid #374151; }
-        .recipe-card:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); border-color: var(--accent); }
-        .modal-backdrop { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); z-index: 40; backdrop-filter: blur(5px); }
-        .modal-content { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; }
-        .editable-cell { cursor: text; }
-        .editable-cell:focus { background-color: #374151; outline: 1px solid var(--accent); }
-        .ai-buddy {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 35;
-        }
-        .ai-buddy-button {
-            width: 60px; height: 60px;
-            background: linear-gradient(45deg, #38BDF8, #A78BFA);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
-            cursor: pointer; transition: all 0.3s ease;
-        }
-        .ai-buddy-button:hover { transform: scale(1.1) rotate(15deg); }
-        .ai-buddy-window {
-            display: none;
-            position: absolute;
-            bottom: 80px;
-            right: 0;
-            width: 350px;
-            height: 500px;
-            background-color: var(--bg-secondary);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border: 1px solid #374151;
-            flex-direction: column;
-            overflow: hidden;
-            transform-origin: bottom right;
-            animation: scaleUp 0.3s ease;
-        }
-        @keyframes scaleUp { from { transform: scale(0); } to { transform: scale(1); } }
-        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 18px; }
-        .chat-bubble.user { background-color: var(--accent); color: var(--bg-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-bubble.ai { background-color: #374151; color: var(--text-primary); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .loading-dots span {
-            animation: blink 1.4s infinite both;
-            height: 8px; width: 8px; background-color: var(--text-secondary); border-radius: 50%; display: inline-block; margin: 0 1px;
-        }
-        .loading-dots span:nth-child(2) { animation-delay: .2s; }
-        .loading-dots span:nth-child(3) { animation-delay: .4s; }
-        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Nunito Sans', sans-serif; background-color: var(--background); color: var(--text-dark); }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', sans-serif; color: var(--text-dark); }
+        .nav-link.active { background-color: var(--primary); color: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .nav-link:not(.active):hover { background-color: #FED7D7; color: var(--primary); }
+        .chart-container { position: relative; width: 100%; max-width: 400px; margin: auto; height: 400px; }
+        .checklist-item label:has(input:checked) span { text-decoration: line-through; color: var(--text-light); }
+        .callout { padding: 1rem; border-left-width: 4px; border-radius: 0.25rem; margin-top: 1rem; }
+        .callout-info { border-color: #63B3ED; background-color: #EBF8FF; }
+        .callout-warning { border-color: #F6AD55; background-color: #FFFAF0; }
+        .callout-note { border-color: #48BB78; background-color: #F0FFF4; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+
+        /* RafflesBot Styles */
+        #rafflesbot-fab { position: fixed; bottom: 80px; right: 20px; md:bottom: 20px; z-index: 1000; }
+        #rafflesbot-fab button { background-color: var(--secondary); color: white; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        #rafflesbot-fab button:hover { transform: scale(1.1); }
+        #rafflesbot-container { position: fixed; bottom: 150px; right: 20px; md:bottom: 100px; width: 90%; max-width: 380px; height: 70vh; max-height: 500px; background-color: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 999; transform: scale(0.95) translateY(20px); opacity: 0; transition: all 0.3s ease-out; pointer-events: none; }
+        #rafflesbot-container.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: auto; }
+        .bot-message { background-color: #EBF8FF; align-self: flex-start; }
+        .user-message { background-color: #E2E8F0; align-self: flex-end; }
+        .bot-option button { border: 1px solid var(--secondary); color: var(--secondary); transition: all 0.2s; }
+        .bot-option button:hover { background-color: var(--secondary); color: white; }
     </style>
 </head>
-<body class="antialiased">
+<body class="flex flex-col md:flex-row min-h-screen">
 
-    <div class="flex min-h-screen">
-        <nav id="sidebar" class="w-64 bg-gray-900/80 backdrop-blur-sm p-4 fixed top-0 left-0 h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-20 flex flex-col">
-            <h1 class="text-2xl font-bold mb-8 text-center text-sky-400 tracking-wider">MABA GUIDE</h1>
-            <ul class="space-y-2 flex-grow">
-                <li><a href="#beranda" class="nav-link block p-3 rounded-lg font-bold">🏠 Beranda</a></li>
-                <li><a href="#mulai-ngekos" class="nav-link block p-3 rounded-lg font-bold">🛠️ Mulai Ngekos</a></li>
-                <li><a href="#anti-galau" class="nav-link block p-3 rounded-lg font-bold">🧘 Anti-Galau</a></li>
-                <li><a href="#dapur-sakti" class="nav-link block p-3 rounded-lg font-bold">🍳 Dapur Sakti</a></li>
-                <li><a href="#jadi-gaul" class="nav-link block p-3 rounded-lg font-bold">😎 Jadi Gaul</a></li>
-            </ul>
-            <div class="text-center p-4">
-                 <p class="text-xs text-gray-500">© 2025 | Your Digital Friend</p>
-            </div>
+    <!-- Sidebar / Bottom Nav -->
+    <aside class="w-full md:w-64 bg-white md:border-r border-gray-200 shrink-0 md:flex flex-col fixed bottom-0 md:relative z-50">
+        <div class="p-6 hidden md:block">
+            <h2 class="text-2xl font-bold text-center">Maba Guide</h2>
+            <p class="text-sm text-gray-500 text-center">Edisi Anak Kos UNIB</p>
+        </div>
+        <nav class="flex flex-row md:flex-col justify-around md:justify-start p-2 bg-white border-t md:border-t-0">
+            <a href="#mulai" class="nav-link flex flex-col md:flex-row items-center gap-1 md:gap-3 rounded-lg p-2 md:p-3 font-semibold mb-0 md:mb-2 active">
+                <span class="text-2xl">🚀</span> <span class="text-xs md:text-base">Mulai</span>
+            </a>
+            <a href="#homesick" class="nav-link flex flex-col md:flex-row items-center gap-1 md:gap-3 rounded-lg p-2 md:p-3 font-semibold mb-0 md:mb-2">
+                <span class="text-2xl">❤️</span> <span class="text-xs md:text-base">Homesick</span>
+            </a>
+            <a href="#dapur" class="nav-link flex flex-col md:flex-row items-center gap-1 md:gap-3 rounded-lg p-2 md:p-3 font-semibold mb-0 md:mb-2">
+                <span class="text-2xl">🍳</span> <span class="text-xs md:text-base">Dapur</span>
+            </a>
+            <a href="#gaul" class="nav-link flex flex-col md:flex-row items-center gap-1 md:gap-3 rounded-lg p-2 md:p-3 font-semibold mb-0 md:mb-2">
+                <span class="text-2xl">🗣️</span> <span class="text-xs md:text-base">Gaul</span>
+            </a>
+            <a href="#kontak" class="nav-link flex flex-col md:flex-row items-center gap-1 md:gap-3 rounded-lg p-2 md:p-3 font-semibold">
+                <span class="text-2xl">🧠</span> <span class="text-xs md:text-base">Jaga Diri</span>
+            </a>
         </nav>
+    </aside>
 
-        <main id="main-content" class="flex-1 lg:ml-64 p-6 sm:p-8 md:p-12 transition-all duration-300 ease-in-out">
-            <button id="menu-toggle" class="lg:hidden fixed top-4 right-4 z-30 bg-gray-800 p-2 rounded-md shadow-lg">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
+    <!-- Main Content -->
+    <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto mb-20 md:mb-0">
+
+        <!-- Section: Mulai Di Sini -->
+        <section id="mulai" class="content-section">
+            <h1 class="text-4xl font-bold mb-2">Selamat Datang di Bengkulu, Kawan!</h1>
+            <p class="mb-6 text-gray-600">Perjuanganmu sampai di titik ini keren banget. Wajar kalau cemas, tapi tenang, kamu nggak sendirian. Aplikasi ini adalah temanmu, dan kalau bingung, panggil aja RafflesBot di pojok kanan bawah!</p>
+            <div class="callout callout-info">
+                <h4 class="font-bold">Kata-Kata Penguat Untukmu 💪</h4>
+                <ul class="list-disc list-inside text-sm mt-2">
+                    <li>Kamu lebih kuat dari yang kamu kira.</li>
+                    <li>Setiap langkah kecil di kota baru ini adalah sebuah kemenangan.</li>
+                    <li>Bingung itu wajar. Bertanya itu pintar. Sendirian itu cuma sementara.</li>
+                </ul>
+            </div>
             
-            <section id="beranda" class="content-section">
-                <h2 class="text-4xl md:text-5xl mb-4">Selamat Datang di Arena Baru!</h2>
-                <p class="text-lg text-gray-400 leading-relaxed max-w-3xl mb-6">Selamat datang, pejuang! Keren banget lo bisa sampai di titik ini. Tapi, pertarungan sesungguhnya baru aja dimulai: jadi anak kos. Wajar banget kalau sekarang lo ngerasa campur aduk. Santai, lo nggak sendirian. Aplikasi ini adalah teman seperjuangan digital lo, berisi semua amunisi yang lo butuhin untuk *survive* dan bahkan *thrive* di tahun pertama ini. Yuk, kita taklukkan dunia perkuliahan dan per-kosan bareng-bareng!</p>
-                <div class="bg-sky-900/50 border-l-4 border-sky-400 text-sky-200 p-6 rounded-r-lg max-w-3xl shadow-lg">
-                    <p class="font-bold text-xl italic">"Setiap petualangan besar dimulai dari satu langkah kecil keluar dari zona nyaman."</p>
-                </div>
-            </section>
-
-            <section id="mulai-ngekos" class="content-section">
-                <h2 class="text-4xl md:text-5xl mb-4">Mulai Ngekos: Siapin Amunisi</h2>
-                <div class="grid md:grid-cols-5 gap-8">
-                    <div class="md:col-span-3 bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-2xl mb-2">✅ Checklist Wajib Anak Kos</h3>
-                        <p class="text-gray-400 mb-4">Centang barang yang udah lo punya. Progress bar di bawah bakal keisi otomatis!</p>
-                        <div class="w-full bg-gray-700 rounded-full h-2.5 mb-4">
-                            <div id="checklist-progress" class="bg-sky-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                        <div id="checklist-container" class="space-y-2 max-h-[450px] overflow-y-auto pr-2"></div>
-                    </div>
-                    <div class="md:col-span-2 bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-2xl mb-4">📞 Direktori Penting Kampus</h3>
-                        <p class="text-gray-400 mb-4">Klik untuk isi kontak penting. Data akan tersimpan otomatis di browser-mu.</p>
-                        <div class="overflow-x-auto max-h-[450px]">
-                            <table class="w-full text-sm text-left text-gray-300">
-                                <thead class="text-xs text-gray-400 uppercase bg-gray-700">
-                                    <tr><th scope="col" class="px-4 py-3">Kontak</th><th scope="col" class="px-4 py-3">Isi Disini</th></tr>
-                                </thead>
-                                <tbody id="direktori-container"></tbody>
-                            </table>
-                        </div>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
+                <div class="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="text-2xl font-bold mb-4">Checklist Wajib Anak Kos</h3>
+                    <div id="checklist-container" class="space-y-2"></div>
+                     <div class="callout callout-warning">
+                        <h4 class="font-bold">⚠️ Awas Miss Ini!</h4>
+                        <p class="text-sm mt-1">Jangan beli perabotan besar sebelum ukur kamar kos! Bawa meteran pas survei. Cek juga daya listrik kosan sebelum beli elektronik, biar nggak jeglek pas nugas.</p>
                     </div>
                 </div>
-            </section>
-
-            <section id="dapur-sakti" class="content-section">
-                <h2 class="text-4xl md:text-5xl mb-4">Dapur Sakti: Resep Anti-Bangkrut</h2>
-                <p class="text-lg text-gray-400 leading-relaxed max-w-4xl mb-8">Selamat datang di pusat kemandirian pangan! Klik kartu resep untuk melihat cara masaknya. Semua resep di sini murah, mudah, dan cepat!</p>
-                <div id="recipes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-            </section>
-            
-            <section id="anti-galau" class="content-section">
-                <h2 class="text-4xl md:text-5xl mb-4">Anti-Galau: Jaga Kewarasan</h2>
-                <p class="text-lg text-gray-400 leading-relaxed max-w-4xl mb-8">Merantau itu soal mental. Di bagian ini, lo bakal nemuin jurus-jurus sakti buat melawan homesick dan tips self-care. Ingat, kesehatan mental lo itu nomor satu.</p>
-                <div id="anti-galau-container" class="space-y-6"></div>
-            </section>
-
-            <section id="jadi-gaul" class="content-section">
-                <h2 class="text-4xl md:text-5xl mb-4">Jadi Gaul: Taklukkan Tongkrongan</h2>
-                 <p class="text-lg text-gray-400 leading-relaxed max-w-4xl mb-8">Adaptasi sosial itu penting. Pelajari bahasa gaul dari berbagai kota dan gunakan *icebreaker* buat membuka obrolan dengan teman baru.</p>
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-2xl mb-4">🗣️ Kamus Gaul Lintas Kota</h3>
-                        <input type="text" id="kamus-search" placeholder="Cari istilah atau kota..." class="w-full p-2 bg-gray-700 border border-gray-600 rounded-md mb-4 focus:ring-2 focus:ring-sky-500 focus:border-transparent">
-                        <div class="overflow-auto max-h-96">
-                            <table class="w-full text-sm text-left text-gray-300">
-                                <thead class="text-xs text-gray-400 uppercase bg-gray-700 sticky top-0">
-                                    <tr><th class="px-4 py-3">Istilah</th><th class="px-4 py-3">Kota</th><th class="px-4 py-3">Arti</th></tr>
-                                </thead>
-                                <tbody id="kamus-gaul-container"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center">
-                        <h3 class="text-2xl mb-4">🤝 Icebreaker Anti-Garing</h3>
-                        <div class="bg-gray-900 p-8 rounded-lg min-h-[150px] flex items-center justify-center w-full mb-4 border border-dashed border-gray-600">
-                            <p id="icebreaker-text" class="text-xl text-sky-300"></p>
-                        </div>
-                        <button id="icebreaker-btn" class="bg-sky-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-sky-600 transition-colors">Ganti Pertanyaan 🎲</button>
-                    </div>
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Estimasi Budget Awal</h3>
+                    <p class="text-center text-sm text-gray-500 mb-4">Perkiraan biaya untuk membeli perlengkapan kos mendasar di Bengkulu.</p>
+                    <div class="chart-container"><canvas id="budgetChart"></canvas></div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </section>
+
+        <!-- Section: Anti-Homesick -->
+        <section id="homesick" class="hidden content-section">
+            <h1 class="text-4xl font-bold mb-2">Panduan Anti-Homesick</h1>
+            <p class="mb-8 text-gray-600">Rindu rumah itu bukan tanda kamu lemah. Yuk, kita ubah rasa kangen itu jadi energi untuk menjelajahi rumah barumu di Bengkulu!</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-xl mb-3">🚨 Pertolongan Pertama</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Video Call Terjadwal:</strong> Jangan cuma nelepon pas sedih.</li>
+                        <li><strong>Bawa 'Jimat' Rumah:</strong> Pajang foto atau pakai selimut dari rumah.</li>
+                        <li><strong>Cry It Out:</strong> Nangis aja gak papa, setelah itu biasanya lega.</li>
+                        <li><strong>Tulis Jurnal:</strong> Tuangkan semua perasaanmu biar nggak sesak.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-xl mb-3">🗺️ Misi Eksplorasi Mingguan</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Jalan sore gratis ke <strong>Pantai Panjang</strong> liat sunset.</li>
+                        <li>Nugas di kafe baru area UNIB, misal <strong>Bootchin Cafe</strong>.</li>
+                        <li>Ajak teman baru coba prasmanan <strong>Makan Mano</strong>.</li>
+                        <li>Jelajahi <strong>Benteng Marlborough</strong>, wisata sejarah keren.</li>
+                    </ol>
+                </div>
+            </div>
+             <div class="callout callout-note mt-6">
+                <h4 class="font-bold">💡 Kutipan Untukmu</h4>
+                <p class="text-sm mt-1 italic">"Rumah bukan lagi sekadar tempat, tapi perasaan. Dan sekarang, tugasmu adalah membangun 'rasa rumah' itu di sini, di Bengkulu."</p>
+            </div>
+        </section>
+
+        <!-- Section: Dapur Anak Kos -->
+        <section id="dapur" class="hidden content-section">
+             <h1 class="text-4xl font-bold mb-2">Dapur Anak Kos Anti-Boncos</h1>
+             <p class="mb-8 text-gray-600">Menguasai resep sederhana adalah kunci bertahan hidup. Klik resep di bawah untuk melihat cara masak lengkapnya!</p>
+             <div id="recipe-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- Section: Gaul -->
+        <section id="gaul" class="hidden content-section">
+            <h1 class="text-4xl font-bold mb-2">Kamus Gaul & Icebreaker</h1>
+            <p class="mb-8 text-gray-600">Biar nggak 'krik-krik' pas ngobrol, pelajari bahasa lokal dan pakai icebreaker ini buat mulai percakapan.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">Kamus Gaul Wajib Maba</h3>
+                    <input type="text" id="kamus-search" placeholder="Cari istilah gaul Bengkulu..." class="w-full p-3 mb-4 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition">
+                    <div id="kamus-list" class="grid grid-cols-2 gap-4"></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="text-2xl font-bold mb-4">Pembuka Obrolan Anti-Canggung</h3>
+                    <ul class="list-disc list-inside space-y-3 text-gray-700">
+                        <li><strong>Di Kelas:</strong> "Eh, kenalin, gue [Nama]. Lo ngerti nggak tadi penjelasan dosen soal [Topik]?"</li>
+                        <li><strong>Di Kosan:</strong> "Kak, numpang nanya dong. Ada rekomendasi warung makan murah yang alap deket sini nggak?"</li>
+                        <li><strong>Di Mana Saja:</strong> "Lo asalnya dari mana? Gue dari [Kota], baru pertama kali ke Bengkulu."</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Kontak & Jaga Diri -->
+        <section id="kontak" class="hidden content-section">
+            <h1 class="text-4xl font-bold mb-2">Jaga Diri & Kontak Penting</h1>
+            <p class="mb-8 text-gray-600">Kesehatan mentalmu itu prioritas. Jangan ragu cari bantuan. Simpan juga kontak penting ini di HP-mu.</p>
+             <div class="callout callout-warning mb-6">
+                <h4 class="font-bold">⚠️ Kapan Harus Cari Bantuan?</h4>
+                <p class="text-sm mt-1">Jika kamu merasa cemas/sedih berlebihan, sulit tidur, dan kehilangan minat pada banyak hal selama berhari-hari, mungkin ini saatnya bicara dengan profesional. Ini normal dan tanda kamu kuat.</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="text-2xl font-bold mb-4">Direktori Penting UNIB</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr><th class="p-2 text-left">Layanan</th><th class="p-2 text-left">Kontak</th><th class="p-2 text-left">Fungsi</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b"><td class="p-2 font-bold">Kesmawa UNIB</td><td class="p-2">Ibu Martha: 08113450057</td><td class="p-2">SUPER PENTING: Info beasiswa, KIP-K, dan layanan konseling.</td></tr>
+                            <tr class="border-b"><td class="p-2 font-bold">Perpustakaan</td><td class="p-2">library.unib.ac.id</td><td class="p-2">Pinjam buku, nugas di tempat adem.</td></tr>
+                            <tr><td class="p-2 font-bold">Puskes Mahasiswa</td><td class="p-2">Gedung Rektorat</td><td class="p-2">Klinik jika sakit atau butuh surat izin.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="modal-overlay"></div>
+
+    <!-- RafflesBot FAB -->
+    <div id="rafflesbot-fab">
+        <button id="open-rafflesbot" class="flex items-center justify-center text-3xl animate-bounce">
+            🌸
+        </button>
     </div>
 
-    <!-- AI Buddy -->
-    <div class="ai-buddy">
-        <div id="ai-buddy-window" class="ai-buddy-window">
-            <div class="p-4 bg-gray-900 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-sky-400 to-violet-400 rounded-full flex items-center justify-center text-2xl">🤖</div>
-                    <div>
-                        <h4 class="font-bold">Gemi, AI Buddy-mu</h4>
-                        <p class="text-xs text-gray-400">Siap bantu kegalauan anak kos!</p>
-                    </div>
-                </div>
-                 <button id="close-ai-btn" class="text-gray-400 hover:text-white">&times;</button>
-            </div>
-            <div id="ai-chat-box" class="flex-grow p-4 space-y-4 overflow-y-auto flex flex-col">
-                 <!-- Chat messages will be appended here -->
-            </div>
-            <div class="p-4 bg-gray-900">
-                <div class="flex gap-2">
-                    <input type="text" id="ai-input" placeholder="Tanya apa aja ke Gemi..." class="flex-grow bg-gray-700 border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent text-sm">
-                    <button id="ai-send-btn" class="bg-sky-500 text-white font-bold p-2 rounded-lg hover:bg-sky-600 transition-colors">Kirim</button>
-                </div>
-            </div>
+    <!-- RafflesBot Modal -->
+    <div id="rafflesbot-container" class="flex flex-col">
+        <div class="p-4 bg-[var(--secondary)] text-white rounded-t-lg flex items-center gap-3">
+            <span class="text-2xl">🌸</span>
+            <div><h3 class="font-bold">RafflesBot</h3><p class="text-xs">Teman Digital Maba UNIB</p></div>
         </div>
-        <div id="ai-buddy-button" class="ai-buddy-button">
-            <span class="text-3xl animate-pulse">🤖</span>
-        </div>
-    </div>
-
-    <!-- Recipe Modal -->
-    <div id="recipe-modal-backdrop" class="modal-backdrop"></div>
-    <div id="recipe-modal-content" class="modal-content bg-gray-800 w-11/12 md:max-w-2xl rounded-2xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
-        <!-- Recipe details will be injected here -->
+        <div id="rafflesbot-chat-window" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3"></div>
+        <div id="rafflesbot-options" class="p-4 border-t border-gray-200"></div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const data = {
-                checklist: [
-                    { category: 'Kamar Tidur', items: ['Kasur, Bantal, Guling', 'Sprei & Sarung Bantal (min. 2 set)', 'Selimut', 'Lemari Pakaian / Rak', 'Meja & Kursi Belajar', 'Kipas Angin', 'Hanger & Jemuran Handuk', 'Gembok & Kunci Cadangan', 'Terminal Listrik'] },
-                    { category: 'Kamar Mandi', items: ['Handuk (min. 2)', 'Peralatan Mandi', 'Ember, Gayung, Sikat WC'] },
-                    { category: 'Pantry', items: ['Rice Cooker (3-in-1)', 'Piring, Mangkok, Gelas, Sendok', 'Botol Minum / Tumbler', 'Spons & Sabun Cuci Piring'] },
-                    { category: 'P3K', items: ['Obat Pusing & Demam', 'Obat Maag / Diare', 'Plester, Betadine', 'Minyak Kayu Putih'] },
-                    { category: 'Kebersihan', items: ['Sapu & Pengki', 'Kain Pel & Ember', 'Keranjang Baju Kotor', 'Deterjen'] }
-                ],
-                direktori: [
-                    { kategori: 'Akademik', kontak: 'Dosen PA' }, { kategori: 'Akademik', kontak: 'Ketua HIMA' },
-                    { kategori: 'Kesehatan & Darurat', kontak: 'Klinik Kampus' }, { kategori: 'Kesehatan & Darurat', kontak: 'Layanan Konseling' }, { kategori: 'Kesehatan & Darurat', kontak: 'Keamanan Kampus' },
-                    { kategori: 'Lingkungan Kos', kontak: 'Ibu/Bapak Kos' }, { kategori: 'Lingkungan Kos', kontak: 'Teman Sebelah Kamar' }, { kategori: 'Lingkungan Kos', kontak: 'Tukang Galon/Gas' }
-                ],
-                 antiGalau: [
-                    { 
-                        title: 'Jurus Sakti Melawan Homesick', 
-                        icon: '🏠',
-                        content: `Kangen rumah itu wajar, yang penting cara ngelolanya. Ini jurus-jurusnya:
-                        <ul class="list-disc list-inside mt-2 text-gray-400">
-                         <li><b>Jurus Cepat:</b> Video Call Keluarga, Peluk "Jimat" dari Rumah, Masak yang Nostalgik, Keluar Jalan Kaki, Tulis di Jurnal.</li>
-                         <li><b>Jurus Jangka Panjang:</b> Dekorasi Kamar, Buat Rutinitas, Ikut Kegiatan Kampus, Eksplorasi Kota Baru, Cari Teman Seperantauan.</li>
-                        </ul>`
-                    },
-                    { 
-                        title: 'Jaga Kewarasan 101 (Self-Care)', 
-                        icon: '🧘',
-                        content: `Jadi mahasiswa itu maraton, bukan sprint. Jaga diri itu wajib!
-                        <ul class="list-disc list-inside mt-2 text-gray-400">
-                         <li><b>Tidur Cukup (7-9 Jam):</b> Otak butuh di-charge.</li>
-                         <li><b>Gerak Badan:</b> Jalan kaki atau lari sore sudah cukup.</li>
-                         <li><b>Makan Benar:</b> Tubuh lo bukan tempat sampah.</li>
-                         <li><b>Ngobrol & Curhat:</b> Jangan pendam masalah sendirian.</li>
-                         <li><b>Ambil Jeda (Me Time):</b> Ini kebutuhan, bukan egois.</li>
-                         <li><b>Minta Bantuan itu Kuat:</b> Ke konselor kampus itu tanda lo cerdas.</li>
-                        </ul>`
-                    }
-                ],
-                recipes: [
-                    { name: 'Telur Ceplok Kecap', time: '5mnt', difficulty: 'Mudah', ingredients: ['1 butir telur', '2 siung bawang putih, cincang', '2 sdm kecap manis', '1 sdm saus tiram', 'Lada bubuk', '3 sdm air', 'Minyak'], steps: ['Panaskan minyak, ceplok telur sesuai selera (setengah matang lebih mantap!), angkat & sisihkan.', 'Tumis bawang putih hingga wangi.', 'Masukkan semua saus, kecap, lada, dan air. Aduk cepat hingga mendidih dan sedikit mengental.', 'Siram saus panas ke atas telur ceplok. Jadi deh!'] },
-                    { name: 'Tumis Tahu Saus Tiram', time: '10mnt', difficulty: 'Mudah', ingredients: ['1 kotak tahu, potong dadu, goreng', '2 siung bawang putih, cincang', '1/2 bawang bombay, iris', '2 sdm saus tiram', '1 sdm kecap manis', 'Garam, lada, kaldu bubuk', '50 ml air'], steps: ['Tumis bawang putih dan bombay hingga harum.', 'Masukkan tahu yang sudah digoreng.', 'Tambahkan saus tiram, kecap manis, garam, lada, dan kaldu bubuk. Aduk rata.', 'Tuang air, masak hingga bumbu meresap. Sajikan.'] },
-                    { name: 'Nasi Gila Akhir Bulan', time: '15mnt', difficulty: 'Mudah', ingredients: ['1 piring nasi putih', '2 buah sosis, iris', '3 buah bakso, iris', '1 butir telur', 'Kol dan sawi secukupnya', '2 siung bawang putih, cincang', '3 buah cabe rawit, iris', 'Kecap manis, saus sambal, saus tiram', 'Garam, lada'], steps: ['Orak-arik telur, sisihkan.', 'Tumis bawang putih dan cabe hingga harum.', 'Masukkan sosis dan bakso, masak hingga matang.', 'Masukkan sayuran, masak hingga sedikit layu.', 'Tambahkan nasi, telur orak-arik, dan semua bumbu. Aduk cepat dengan api besar hingga semua tercampur rata. Koreksi rasa.'] },
-                    { name: 'Omelet Mie Kebanggaan', time: '10mnt', difficulty: 'Mudah', ingredients: ['1 bungkus mie instan', '1 butir telur', 'Daun bawang, iris (opsional)', 'Cabe rawit, iris (opsional)'], steps: ['Rebus mie hingga matang, tiriskan. Campurkan dengan bumbunya.', 'Kocok telur, masukkan mie, daun bawang, dan cabe. Aduk rata.', 'Panaskan sedikit minyak di teflon, tuang adonan mie telur.', 'Masak dengan api kecil hingga kedua sisi matang kecoklatan.'] },
-                    { name: 'Tumis Kangkung Terasi', time: '7mnt', difficulty: 'Mudah', ingredients: ['1 ikat kangkung, siangi', '2 siung bawang putih, iris', '3 siung bawang merah, iris', '1/2 sdt terasi bakar', '3 buah cabe rawit, iris', 'Garam, gula, saus tiram'], steps: ['Tumis duo bawang, cabe, dan terasi hingga harum.', 'Masukkan kangkung, aduk cepat dengan api besar.', 'Bumbui dengan garam, gula, dan sedikit saus tiram.', 'Masak sebentar saja agar kangkung tetap renyah. Angkat dan sajikan.'] },
-                ],
-                kamus: [
-                    { istilah: 'Dab', kota: 'Jogja', arti: 'Mas (sapaan akrab)' }, { istilah: 'Jape Methe', kota: 'Jogja', arti: 'Teman sendiri' }, { istilah: 'Kane', kota: 'Malang', arti: 'Enak' }, { istilah: 'Sam', kota: 'Malang', arti: 'Mas (sapaan akrab)' }, { istilah: 'Ngalup', kota: 'Malang', arti: 'Pulang' }, { istilah: 'Hoream', kota: 'Bandung', arti: 'Malas gerak, mager' }, { istilah: 'Jangar', kota: 'Bandung', arti: 'Pusing kepala' }, { istilah: 'Naon?', kota: 'Bandung', arti: 'Apa?' }, { istilah: 'Literally', kota: 'Jakarta', arti: 'Secara harfiah' }, { istilah: 'Which is...', kota: 'Jakarta', arti: 'Yang mana...' }, { istilah: 'Burnout', kota: 'Jakarta', arti: 'Stres berat' }, { istilah: 'Red Flag', kota: 'Jakarta', arti: 'Tanda bahaya' }
-                ],
-                icebreakers: ["Lo dari SMA/kota mana?", "Mata kuliah apa yang paling bikin lo penasaran sekaligus takut?", "Eh, tau warteg enak deket sini nggak?", "Genre musik/film favorit lo apa?", "Tim bubur diaduk atau nggak diaduk? Alesannya?", "Karakter kartun yang paling relate sama hidup lo siapa?"]
-            };
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- DATA ---
+        const checklistData = {
+            "Zona Tidur & Belajar": ["Kasur", "Bantal & Guling", "Sprei (2 set)", "Meja & Kursi Belajar", "Lampu Belajar", "Terminal Listrik"],
+            "Zona Dapur Mini": ["Rice Cooker", "Peralatan Makan", "Botol Minum", "Sabun Cuci Piring"],
+            "Zona Mandi & Kebersihan": ["Peralatan Mandi", "Handuk (2)", "Deterjen", "Sapu & Pel"],
+            "Zona Penting Lainnya": ["Obat Pribadi & P3K", "Dokumen Penting", "Gembok", "Payung/Jas Hujan"]
+        };
+        const recipes = [
+            { title: "Nasi Goreng Sat Set", level: "Pemula", ingredients: ["1 piring nasi sisa", "1 butir telur", "2 siung bawang putih", "2 sdm kecap manis", "Garam"], steps: ["Panaskan minyak, buat telur orak-arik.", "Tumis bawang putih sampai wangi.", "Masukkan nasi, aduk sampai pecah.", "Campurkan telur, tuang kecap & garam.", "Aduk rata, koreksi rasa, sajikan."] },
+            { title: "Mie Instan Naik Kelas", level: "Pemula", ingredients: ["1 bks mie instan", "1 butir telur", "Sawi hijau", "Cabe rawit"], steps: ["Rebus mie setengah matang, tiriskan.", "Masukkan mie & bumbu ke sisa air.", "Masukkan telur, aduk cepat.", "Masukkan sawi & cabe, masak sebentar.", "Angkat dan sajikan."] },
+            { title: "Ikan Sambal Caluk", level: "Cita Rasa Lokal", ingredients: ["2 ekor ikan kembung", "1 bks bumbu instan", "Bahan Sambal: 5 cabe, 1 bawang, 1/2 tomat, 1 sdt caluk bakar"], steps: ["Lumuri ikan dengan bumbu instan.", "Goreng ikan hingga garing.", "Ulek kasar semua bahan sambal.", "Siram sambal dengan minyak panas.", "Sajikan ikan dengan nasi hangat dan sambal."] }
+        ];
+        const kamusGaul = [
+            { term: "Kito/Awak", meaning: "Kita / Saya" }, { term: "Pacak", meaning: "Bisa, mampu" },
+            { term: "Nian", meaning: "Banget, sekali" }, { term: "Karut", meaning: "Kacau, jelek" },
+            { term: "Alap", meaning: "Bagus, cakep" }, { term: "Dempo", meaning: "Demi apa?" },
+            { term: "Ningpa", meaning: "Pusing kepala" }, { term: "Peh", meaning: "Yuk, ayo" }
+        ];
+        const botResponses = {
+            'makan': "Laper ya? Di UNIB Belakang banyak banget pilihan! Coba deh <strong>Makan Mano</strong> (prasmanan murah) atau cari <strong>Seblak Prasmanan</strong>. Dijamin kenyang!",
+            'homesick': "Wajar banget kangen rumah! Coba deh keluar kamar, jalan-jalan sore ke <strong>Pantai Panjang</strong>. Dengerin suara ombak bisa nenangin pikiran, lho. Semangat!",
+            'gaul': "Biar cepet akrab, coba pakai kata ini: <strong>'Peh'</strong> (artinya 'yuk'). Contoh: 'Peh, makan peh, laper nian!'. Pasti langsung nyambung!",
+            'kontak': "Kalau ada urusan penting soal beasiswa atau butuh konseling, langsung hubungi <strong>Kesmawa UNIB</strong> ya. Kontak Ibu Martha di 08113450057. Jangan ragu!",
+            'default': "Duh, maaf nian, RafflesBot belum ngerti itu. Coba pilih salah satu topik di bawah ini ya, kito belajar bareng-bareng!"
+        };
+        const initialOptions = [
+            { text: " rekomendasi makan murah!", key: 'makan' },
+            { text: " lagi homesick nih...", key: 'homesick' },
+            { text: " ajarin bahasa gaul dong!", key: 'gaul' },
+            { text: " butuh kontak penting!", key: 'kontak' }
+        ];
 
-            // Navigation
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.getElementById('menu-toggle');
-            menuToggle.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
-            function navigate() {
-                const hash = window.location.hash || '#beranda';
-                document.querySelectorAll('.nav-link').forEach(link => link.classList.toggle('active', link.getAttribute('href') === hash));
-                document.querySelectorAll('.content-section').forEach(section => section.classList.toggle('active', `#${section.id}` === hash));
-                if (window.innerWidth < 1024) sidebar.classList.add('-translate-x-full');
-            }
-            window.addEventListener('hashchange', navigate);
-            document.querySelectorAll('.nav-link').forEach(link => link.addEventListener('click', (e) => { window.location.hash = e.currentTarget.getAttribute('href'); }));
-
-            // Checklist
-            function initChecklist() {
-                const container = document.getElementById('checklist-container');
-                let html = '';
-                data.checklist.forEach(cat => {
-                    html += `<h4 class="font-bold text-sky-400 mt-4">${cat.category}</h4>`;
-                    cat.items.forEach(item => {
-                        html += `<label class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700 cursor-pointer">
-                            <input type="checkbox" class="checklist-item h-5 w-5 rounded border-gray-600 bg-gray-700 text-sky-500 focus:ring-sky-500">
-                            <span class="text-gray-300">${item}</span></label>`;
-                    });
-                });
-                container.innerHTML = html;
-                
-                const checkboxes = document.querySelectorAll('.checklist-item');
-                const progressBar = document.getElementById('checklist-progress');
-                checkboxes.forEach(cb => cb.addEventListener('change', () => {
-                    const checkedCount = document.querySelectorAll('.checklist-item:checked').length;
-                    const total = checkboxes.length;
-                    progressBar.style.width = `${(checkedCount / total) * 100}%`;
-                }));
-            }
-
-            // Direktori
-            function initDirektori() {
-                const container = document.getElementById('direktori-container');
-                const savedData = JSON.parse(localStorage.getItem('direktoriData')) || {};
-                container.innerHTML = data.direktori.map(item => {
-                    const id = `${item.kategori}-${item.kontak}`.replace(/\s/g, '');
-                    const value = savedData[id] || '[Klik & Isi]';
-                    return `<tr class="border-b border-gray-700">
-                        <td class="px-4 py-3 font-medium text-gray-200">${item.kontak} <span class="text-xs text-gray-500">(${item.kategori})</span></td>
-                        <td class="px-4 py-3 text-gray-400 italic editable-cell" contenteditable="true" data-id="${id}">${value}</td></tr>`;
-                }).join('');
-                
-                container.addEventListener('focusout', (e) => {
-                    if (e.target.classList.contains('editable-cell')) {
-                        const id = e.target.dataset.id;
-                        const value = e.target.textContent;
-                        savedData[id] = value;
-                        localStorage.setItem('direktoriData', JSON.stringify(savedData));
-                        e.target.classList.remove('italic');
-                        if(e.target.textContent === '') e.target.textContent = '[Klik & Isi]';
-                    }
-                });
-            }
-            
-            // Recipes
-            function initRecipes() {
-                const grid = document.getElementById('recipes-grid');
-                grid.innerHTML = data.recipes.map((recipe, index) => `
-                    <div class="recipe-card bg-gray-800 rounded-xl p-5 cursor-pointer flex flex-col" data-index="${index}">
-                        <h4 class="font-bold text-lg text-gray-100 flex-grow">${recipe.name}</h4>
-                        <div class="text-xs mt-3 flex gap-2">
-                            <span class="bg-sky-900 text-sky-300 px-2 py-1 rounded-full">${recipe.time}</span>
-                            <span class="bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full">${recipe.difficulty}</span>
-                        </div>
-                    </div>`).join('');
-                
-                const modalBackdrop = document.getElementById('recipe-modal-backdrop');
-                const modalContent = document.getElementById('recipe-modal-content');
-                grid.addEventListener('click', (e) => {
-                    const card = e.target.closest('.recipe-card');
-                    if (card) {
-                        const recipe = data.recipes[card.dataset.index];
-                        modalContent.innerHTML = `
-                            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
-                            <h3 class="text-3xl mb-4 text-sky-400">${recipe.name}</h3>
-                            <div class="grid md:grid-cols-2 gap-6">
-                                <div>
-                                    <h4 class="font-bold text-lg mb-2">Bahan-bahan:</h4>
-                                    <ul class="list-disc list-inside text-gray-300 space-y-1">${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-lg mb-2">Cara Masak:</h4>
-                                    <ol class="list-decimal list-inside text-gray-300 space-y-2">${recipe.steps.map(s => `<li>${s}</li>`).join('')}</ol>
-                                </div>
-                            </div>`;
-                        modalBackdrop.style.display = 'block';
-                        modalContent.style.display = 'block';
-                        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-                    }
-                });
-                const closeModal = () => {
-                    modalBackdrop.style.display = 'none';
-                    modalContent.style.display = 'none';
-                };
-                modalBackdrop.addEventListener('click', closeModal);
-            }
-
-            // Anti Galau
-            function initAntiGalau() {
-                const container = document.getElementById('anti-galau-container');
-                container.innerHTML = data.antiGalau.map(item => `
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-2xl mb-2">${item.icon} ${item.title}</h3>
-                        <div class="text-gray-300 leading-relaxed">${item.content}</div>
-                    </div>`).join('');
-            }
-            
-            // Kamus
-            function initKamus() {
-                const container = document.getElementById('kamus-gaul-container');
-                const searchInput = document.getElementById('kamus-search');
-                const renderKamus = (filter = '') => {
-                    const filteredKamus = data.kamus.filter(k => k.istilah.toLowerCase().includes(filter) || k.kota.toLowerCase().includes(filter));
-                    container.innerHTML = filteredKamus.map(k => `<tr class="border-b border-gray-700"><td class="px-4 py-3 font-medium">${k.istilah}</td><td class="px-4 py-3">${k.kota}</td><td class="px-4 py-3">${k.arti}</td></tr>`).join('');
-                };
-                searchInput.addEventListener('input', (e) => renderKamus(e.target.value.toLowerCase()));
-                renderKamus();
-            }
-
-            // Icebreaker
-            function initIcebreaker() {
-                const textEl = document.getElementById('icebreaker-text');
-                const btn = document.getElementById('icebreaker-btn');
-                let currentIndex = -1;
-                const showRandomIcebreaker = () => {
-                    let newIndex;
-                    do { newIndex = Math.floor(Math.random() * data.icebreakers.length); } while (newIndex === currentIndex);
-                    currentIndex = newIndex;
-                    textEl.textContent = data.icebreakers[currentIndex];
-                };
-                btn.addEventListener('click', showRandomIcebreaker);
-                showRandomIcebreaker();
-            }
-
-            // AI Buddy
-            const aiBuddyButton = document.getElementById('ai-buddy-button');
-            const aiWindow = document.getElementById('ai-buddy-window');
-            const closeAiBtn = document.getElementById('close-ai-btn');
-            const chatBox = document.getElementById('ai-chat-box');
-            const aiInput = document.getElementById('ai-input');
-            const aiSendBtn = document.getElementById('ai-send-btn');
-
-            aiBuddyButton.addEventListener('click', () => { aiWindow.style.display = 'flex'; aiBuddyButton.style.display = 'none'; addAiMessage("Hai! Aku Gemi, AI Buddy-mu. Ada yang bisa kubantu? Coba tanya soal resep, cara ngilangin stres, atau apa aja!") });
-            closeAiBtn.addEventListener('click', () => { aiWindow.style.display = 'none'; aiBuddyButton.style.display = 'block'; });
-
-            function addMessage(text, type) {
-                const bubble = document.createElement('div');
-                bubble.className = `chat-bubble ${type}`;
-                bubble.textContent = text;
-                chatBox.appendChild(bubble);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-            
-            function addAiMessage(text) {
-                const bubble = document.createElement('div');
-                bubble.className = 'chat-bubble ai';
-                bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>');
-                chatBox.appendChild(bubble);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-
-            function showLoading(show = true) {
-                const existingLoading = document.getElementById('loading-bubble');
-                if (show) {
-                    if (!existingLoading) {
-                        const loadingBubble = document.createElement('div');
-                        loadingBubble.id = 'loading-bubble';
-                        loadingBubble.className = 'chat-bubble ai loading-dots';
-                        loadingBubble.innerHTML = '<span></span><span></span><span></span>';
-                        chatBox.appendChild(loadingBubble);
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                    }
-                } else {
-                    if (existingLoading) {
-                        existingLoading.remove();
-                    }
-                }
-            }
-            
-            async function handleAiQuery() {
-                const prompt = aiInput.value.trim();
-                if (!prompt) return;
-
-                addMessage(prompt, 'user');
-                aiInput.value = '';
-                showLoading(true);
-                
-                try {
-                    const chatHistory = [{ role: "user", parts: [{ text: `Kamu adalah Gemi, asisten AI yang ramah, lucu, dan suportif untuk mahasiswa baru di Indonesia yang sedang ngekos. Jawab pertanyaan berikut dengan gaya bahasa gaul, singkat, dan positif. Pertanyaan: "${prompt}"` }] }];
-                    const payload = { contents: chatHistory };
-                    const apiKey = ""; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`API error: ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    showLoading(false);
-                    
-                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
-                        const text = result.candidates[0].content.parts[0].text;
-                        addAiMessage(text);
-                    } else {
-                        addAiMessage("Waduh, Gemi lagi pusing nih. Coba tanya lagi nanti ya!");
-                    }
-                } catch (error) {
-                    console.error("Error fetching AI response:", error);
-                    showLoading(false);
-                    addAiMessage("Duh, koneksi lagi jelek kayaknya. Maaf ya, coba lagi nanti.");
-                }
-            }
-
-            aiSendBtn.addEventListener('click', handleAiQuery);
-            aiInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAiQuery(); });
-
-            // Init all functions
-            initChecklist();
-            initDirektori();
-            initRecipes();
-            initAntiGalau();
-            initKamus();
-            initIcebreaker();
-            navigate();
+        // --- NAVIGATION ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        function switchTab(hash) {
+            contentSections.forEach(section => section.classList.toggle('hidden', '#' + section.id !== hash));
+            navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === hash));
+        }
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const hash = e.currentTarget.getAttribute('href');
+                switchTab(hash);
+                window.location.hash = hash;
+            });
         });
+
+        // --- CHECKLIST ---
+        const checklistContainer = document.getElementById('checklist-container');
+        let checkedItems = JSON.parse(localStorage.getItem('unibMabaChecklist')) || [];
+        Object.entries(checklistData).forEach(([category, items]) => {
+            const details = document.createElement('details');
+            details.className = 'bg-gray-50 rounded';
+            details.innerHTML = `<summary class="font-semibold p-3 cursor-pointer">${category}</summary><div class="p-3 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-2 accordion-content"></div>`;
+            const itemsDiv = details.querySelector('div');
+            items.forEach(item => {
+                const isChecked = checkedItems.includes(item);
+                itemsDiv.innerHTML += `<div class="checklist-item"><label class="flex items-center cursor-pointer"><input type="checkbox" data-item="${item}" class="h-5 w-5 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]" ${isChecked ? 'checked' : ''}><span class="ml-3 text-sm">${item}</span></label></div>`;
+            });
+            checklistContainer.appendChild(details);
+        });
+        checklistContainer.addEventListener('change', (e) => {
+            if (e.target.type === 'checkbox') {
+                const item = e.target.dataset.item;
+                if (e.target.checked) {
+                    if (!checkedItems.includes(item)) checkedItems.push(item);
+                } else {
+                    checkedItems = checkedItems.filter(i => i !== item);
+                }
+                localStorage.setItem('unibMabaChecklist', JSON.stringify(checkedItems));
+            }
+        });
+
+        // --- BUDGET CHART ---
+        const ctx = document.getElementById('budgetChart').getContext('2d');
+        const budgetData = {
+            labels: ['Elektronik (Rp 350rb)', 'Perlengkapan Tidur (Rp 450rb)', 'Peralatan Makan (Rp 75rb)', 'Kebersihan (Rp 125rb)', 'Penyimpanan (Rp 225rb)'],
+            data: [350000, 450000, 75000, 125000, 225000],
+        };
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: budgetData.labels,
+                datasets: [{
+                    label: 'Estimasi Budget',
+                    data: budgetData.data,
+                    backgroundColor: ['#E2725B', '#2C5282', '#F6AD55', '#48BB78', '#9F7AEA'],
+                    borderColor: 'var(--card-bg)',
+                    borderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label.split('(')[0].trim();
+                                if (context.parsed !== null) {
+                                    label += ': ' + new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(context.parsed);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // --- RECIPES ---
+        const recipeContainer = document.getElementById('recipe-container');
+        const modalContainer = document.getElementById('modal-container');
+        recipes.forEach((recipe, index) => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-xl shadow-sm hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer";
+            card.innerHTML = `<h4 class="font-bold text-lg">${recipe.title}</h4><p class="text-sm text-gray-500">Level: ${recipe.level}</p>`;
+            card.onclick = () => showRecipeModal(index);
+            recipeContainer.appendChild(card);
+        });
+
+        function showRecipeModal(index) {
+            const recipe = recipes[index];
+            modalContainer.innerHTML = `
+                <div class="modal-content">
+                    <h3 class="text-2xl font-bold mb-4">${recipe.title}</h3>
+                    <div class="grid md:grid-cols-2 gap-6 text-sm">
+                        <div>
+                            <h4 class="font-bold mb-2">Bahan-bahan:</h4>
+                            <ul class="list-disc list-inside space-y-1">${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-2">Cara Masak:</h4>
+                            <ol class="list-decimal list-inside space-y-1">${recipe.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+                        </div>
+                    </div>
+                    <button id="close-modal" class="mt-6 bg-[var(--primary)] text-white px-4 py-2 rounded-lg w-full">Tutup</button>
+                </div>`;
+            modalContainer.classList.add('open');
+            document.getElementById('close-modal').onclick = () => modalContainer.classList.remove('open');
+        }
+        modalContainer.addEventListener('click', (e) => { if (e.target === modalContainer) modalContainer.classList.remove('open'); });
+
+        // --- KAMUS GAUL ---
+        const kamusList = document.getElementById('kamus-list');
+        const kamusSearch = document.getElementById('kamus-search');
+        function renderKamus(filter = '') {
+            const filtered = kamusGaul.filter(item => item.term.toLowerCase().includes(filter.toLowerCase()) || item.meaning.toLowerCase().includes(filter.toLowerCase()));
+            kamusList.innerHTML = filtered.map(item => `<div class="bg-gray-50 p-3 rounded-lg"><p class="font-bold">${item.term}</p><p class="text-sm text-gray-600">${item.meaning}</p></div>`).join('') || '<p class="text-sm text-gray-500 col-span-2">Tidak ditemukan.</p>';
+        }
+        kamusSearch.addEventListener('input', (e) => renderKamus(e.target.value));
+        
+        // --- RAFFLESBOT ---
+        const fab = document.getElementById('open-rafflesbot');
+        const botContainer = document.getElementById('rafflesbot-container');
+        const chatWindow = document.getElementById('rafflesbot-chat-window');
+        const optionsContainer = document.getElementById('rafflesbot-options');
+        fab.addEventListener('click', () => botContainer.classList.toggle('open'));
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-3 rounded-lg max-w-[80%] text-sm ${sender === 'bot' ? 'bot-message' : 'user-message'}`;
+            messageDiv.innerHTML = text;
+            chatWindow.appendChild(messageDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+        function showOptions(options) {
+            optionsContainer.innerHTML = '';
+            const optionsWrapper = document.createElement('div');
+            optionsWrapper.className = 'grid grid-cols-2 gap-2';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'p-2 rounded-lg text-xs bot-option';
+                btn.innerHTML = `🌸 ${opt.text}`;
+                btn.onclick = () => handleOptionClick(opt);
+                optionsWrapper.appendChild(btn);
+            });
+            optionsContainer.appendChild(optionsWrapper);
+        }
+        function handleOptionClick(option) {
+            addMessage(option.text, 'user');
+            optionsContainer.innerHTML = '<p class="text-center text-xs text-gray-400">RafflesBot lagi mikir...</p>';
+            setTimeout(() => {
+                addMessage(botResponses[option.key] || botResponses['default'], 'bot');
+                showOptions(initialOptions);
+            }, 1000);
+        }
+
+        // --- INITIAL LOAD ---
+        const initialHash = window.location.hash || '#mulai';
+        switchTab(initialHash);
+        renderKamus();
+        addMessage("Hai, kawan maba! Aku RafflesBot. Ada yang bisa dibantu?", 'bot');
+        showOptions(initialOptions);
+    });
     </script>
 </body>
 </html>
